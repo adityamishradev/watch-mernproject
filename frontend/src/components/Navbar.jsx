@@ -1,6 +1,10 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useCart } from "../contexts/CartContext";
+import { useWishlist } from "../contexts/WishlistContext";
+import { getImageUrl } from "../utils/imageUtils";
+import SearchDropdown from "./SearchDropdown";
 import {
   FaSearch,
   FaTimes,
@@ -14,31 +18,47 @@ import {
 const LINKS = [
   { name: "Home", to: "/" },
   { name: "About", to: "/about" },
-  // { name: "Collection", to: "/collections" },
+  { name: "Collection", to: "/collections" },
 ];
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { items: cartItems } = useCart();
+  const { items: wishlistItems } = useWishlist();
+  const navigate = useNavigate();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
 
   // 🔥 Dummy States (later connect with Context API)
-  const [wishlistItems, setWishlistItems] = useState([]);
-  const [cartItems, setCartItems] = useState([]);
 
   const [query, setQuery] = useState("");
 
   const submitSearch = (e) => {
     e.preventDefault();
-    console.log("search:", query);
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+      setQuery(""); // Clear search after submitting
+      setMobileSearchOpen(false); // Close mobile search
+    }
   };
 
   const handleLogout = async () => {
     await logout();
     setUserMenuOpen(false);
   };
+
+  // Calculate total cart items (only for authenticated users)
+  const totalCartItems = user && user.isAuthenticated 
+    ? cartItems.reduce((total, item) => total + item.qty, 0) 
+    : 0;
+
+  // Calculate wishlist items count (only for authenticated users)
+  const totalWishlistItems = user && user.isAuthenticated 
+    ? wishlistItems.length 
+    : 0;
 
   return (
     <header className="w-full bg-white shadow-sm relative">
@@ -54,23 +74,43 @@ const Navbar = () => {
 
         {/* DESKTOP SEARCH */}
         <div className="flex-1 hidden md:flex justify-center">
-          <form
-            onSubmit={submitSearch}
-            className="relative w-full max-w-lg"
-          >
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="What are you looking for?"
-              className="w-full pl-5 pr-14 py-2.5 rounded-full bg-gray-900 focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-pink-500 text-white p-2.5 rounded-full"
+          <div className="relative w-full max-w-lg">
+            <form
+              onSubmit={submitSearch}
+              className="relative"
             >
-              <FaSearch />
-            </button>
-          </form>
+              <input
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setShowSearchDropdown(true);
+                }}
+                onFocus={() => setShowSearchDropdown(true)}
+                onBlur={() => {
+                  // Delay hiding to allow clicking on dropdown items
+                  setTimeout(() => setShowSearchDropdown(false), 200);
+                }}
+                placeholder="What are you looking for?"
+                className="w-full pl-5 pr-14 py-2.5 rounded-full bg-gray-100 focus:outline-none text-gray-800"
+              />
+              <button
+                type="submit"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-pink-500 text-white p-2.5 rounded-full"
+              >
+                <FaSearch />
+              </button>
+            </form>
+            
+            {showSearchDropdown && (
+              <SearchDropdown 
+                query={query} 
+                onClose={() => {
+                  setShowSearchDropdown(false);
+                  setQuery("");
+                }}
+              />
+            )}
+          </div>
         </div>
 
         {/* DESKTOP LINKS */}
@@ -86,24 +126,21 @@ const Navbar = () => {
           ))}
 
           {/* Wishlist */}
-          <button
-            onClick={() => setWishlistOpen((s) => !s)}
-            className="relative text-gray-700"
-          >
+          <NavLink to="/wishlist" className="relative text-gray-700">
             <FaHeart />
-            {wishlistItems.length > 0 && (
+            {totalWishlistItems > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1">
-                {wishlistItems.length}
+                {totalWishlistItems}
               </span>
             )}
-          </button>
+          </NavLink>
 
           {/* 🛒 Cart */}
           <NavLink to="/cart" className="relative text-gray-700">
             <FaShoppingCart className="text-lg" />
-            {cartItems.length > 0 && (
+            {totalCartItems > 0 && (
               <span className="absolute -top-2 -right-2 bg-black text-white text-xs rounded-full px-1.5">
-                {cartItems.length}
+                {totalCartItems}
               </span>
             )}
           </NavLink>
@@ -181,9 +218,9 @@ const Navbar = () => {
           {/* Mobile Cart */}
           <NavLink to="/cart" className="relative text-gray-700 text-lg">
             <FaShoppingCart />
-            {cartItems.length > 0 && (
+            {totalCartItems > 0 && (
               <span className="absolute -top-2 -right-2 bg-black text-white text-[10px] rounded-full px-1">
-                {cartItems.length}
+                {totalCartItems}
               </span>
             )}
           </NavLink>
@@ -205,7 +242,7 @@ const Navbar = () => {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search..."
-              className="w-full pl-4 pr-12 py-2.5 rounded-full bg-gray-100"
+              className="w-full pl-4 pr-12 py-2.5 rounded-full bg-gray-100 text-gray-800 focus:outline-none"
             />
             <button
               type="submit"
@@ -280,12 +317,19 @@ const Navbar = () => {
       {wishlistOpen && (
         <div className="hidden md:block absolute right-4 top-full mt-3 w-72 bg-white border rounded shadow z-50 p-3">
           <div className="font-semibold mb-2">Wishlist</div>
-          {wishlistItems.length === 0 ? (
+          {totalWishlistItems === 0 ? (
             <div className="text-sm text-gray-500">No items in wishlist</div>
           ) : (
             <ul className="space-y-2">
-              {wishlistItems.map((it, i) => (
-                <li key={i} className="text-sm">{it}</li>
+              {wishlistItems.map((item, i) => (
+                <li key={i} className="text-sm flex items-center gap-2">
+                  <img 
+                    src={getImageUrl(item.imgSrc)} 
+                    alt={item.title}
+                    className="w-8 h-8 object-cover rounded"
+                  />
+                  <span>{item.title}</span>
+                </li>
               ))}
             </ul>
           )}

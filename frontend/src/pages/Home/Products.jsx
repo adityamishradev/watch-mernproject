@@ -1,95 +1,90 @@
-import React, { useEffect, useState } from "react";
-import API from "../../services/api";
-import { useCart } from "../../contexts/CartContext";
+import React, { useState, useEffect } from 'react';
+import API from '../../services/api';
+import ProductCard from '../../components/ProductCard';
 
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    let mounted = true;
-
-    async function fetchProducts() {
-      try {
-        setLoading(true);
-        const res = await API.get("/products");
-        if (mounted) {
-          setProducts(res.data.products || []);
-        }
-      } catch (err) {
-        if (mounted) setError(err.message || "Failed to load products");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-
-    fetchProducts();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const [addingIds, setAddingIds] = useState([]);
-  const { addItem } = useCart();
-
-  const handleAddToCart = async (product) => {
-    const id = product._id || product.id;
+  // Fetch products from backend
+  const fetchProducts = async () => {
     try {
-      setAddingIds((s) => [...s, id]);
-      await addItem(product, 1);
-      alert("Added to cart");
+      setLoading(true);
+      const response = await API.get('/products');
+      
+      if (response.data.success) {
+        setProducts(response.data.products);
+      } else {
+        setError('Failed to fetch products');
+      }
     } catch (err) {
-      alert(err?.message || "Failed to add to cart");
+      console.error('Error fetching products:', err);
+      setError('Failed to load products');
     } finally {
-      setAddingIds((s) => s.filter((i) => i !== id));
+      setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="bg-black min-h-screen text-white px-6 py-12">
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-400">Loading products...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-black min-h-screen text-white px-6 py-12">
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-red-400 mb-4">{error}</p>
+            <button 
+              onClick={fetchProducts}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-black min-h-screen text-white px-6 py-12">
-      <h1 className="text-3xl md:text-4xl font-bold text-center mb-10">
-        Watch Collection
-      </h1>
+      {/* Heading */}
+      <div className="text-center mb-10">
+        <h1 className="text-3xl md:text-4xl font-bold mb-4">
+          Watch Collection
+        </h1>
+        <p className="text-gray-400 max-w-2xl mx-auto">
+          Discover our premium collection of watches from luxury brands to everyday essentials
+        </p>
+      </div>
 
-      {loading ? (
-        <p className="text-center">Loading products...</p>
-      ) : error ? (
-        <p className="text-center text-red-400">{error}</p>
-      ) : products.length === 0 ? (
-        <p className="text-center">No products found.</p>
+      {/* Products Grid */}
+      {products.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-gray-400 text-lg">No products available at the moment</p>
+        </div>
       ) : (
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
           {products.map((product) => (
-            <div
-              key={product._id || product.id}
-              className="bg-[#111827] rounded-xl overflow-hidden shadow-lg hover:scale-105 transition duration-300"
-            >
-              <img
-                src={product.imgSrc}
-                alt={product.title}
-                className="w-full h-56 object-cover"
-              />
-
-              <div className="p-5">
-                <h2 className="text-lg font-semibold mb-2">{product.title}</h2>
-
-                <p className="text-gray-400 text-sm mb-3">{product.description}</p>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-blue-400 font-bold">₹{String(product.price).replace(/\B(?=(\d{3})+(?!\d))/g,",")}</span>
-
-                  <button
-                    onClick={() => handleAddToCart(product)}
-                    disabled={addingIds.includes(product._id || product.id)}
-                    className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded-lg disabled:opacity-50"
-                  >
-                    {addingIds.includes(product._id || product.id) ? "Adding..." : "Add to Cart"}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ProductCard 
+              key={product._id} 
+              product={product}
+            />
           ))}
         </div>
       )}

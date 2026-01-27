@@ -22,15 +22,22 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
+      console.log("=== AUTH CHECK ===");
       // Check if there's a stored user in localStorage
       const storedUser = localStorage.getItem('user');
+      console.log("Stored user in localStorage:", storedUser);
+      
       if (storedUser) {
         const userData = JSON.parse(storedUser);
-        setUser({
+        const userState = {
           ...userData,
           isAuthenticated: true,
           isAdmin: userData.role === 'admin'
-        });
+        };
+        console.log("Setting user state:", userState);
+        setUser(userState);
+      } else {
+        console.log("No stored user found");
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -42,8 +49,13 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password, isAdmin = false) => {
     try {
+      console.log("=== LOGIN ATTEMPT ===");
+      console.log("Email:", email, "IsAdmin:", isAdmin);
+      
       const endpoint = isAdmin ? '/auth/adminlogin' : '/auth/login';
       const res = await API.post(endpoint, { email, password });
+      
+      console.log("Login response:", res.data);
       
       if (res.data.user) {
         const userData = {
@@ -52,12 +64,16 @@ export const AuthProvider = ({ children }) => {
           isAdmin: res.data.user.role === 'admin'
         };
         
+        console.log("Setting user after login:", userData);
         setUser(userData);
         localStorage.setItem('user', JSON.stringify(res.data.user));
+  localStorage.setItem('token', res.data.token)
+
         
         return { success: true, user: res.data.user };
       }
     } catch (error) {
+      console.error("Login error:", error);
       return { 
         success: false, 
         message: error.response?.data?.message || 'Login failed' 

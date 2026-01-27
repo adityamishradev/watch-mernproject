@@ -88,6 +88,7 @@ const AdminDashboard = () => {
             setProducts={setProducts}
             fetchProducts={fetchProducts}
             loading={loading}
+            setActive={setActive}
           />
         )}
 

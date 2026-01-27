@@ -1,5 +1,9 @@
 const Sidebar = ({ active, setActive }) => {
-  const menu = ["dashboard", "users", "products", "add"];
+  const menu = [
+    { key: "dashboard", label: "Dashboard" },
+    { key: "users", label: "Users" },
+    { key: "products", label: "Products" }
+  ];
 
   return (
     <aside className="w-56 bg-gray-900 text-white p-5">
@@ -7,12 +11,12 @@ const Sidebar = ({ active, setActive }) => {
 
       {menu.map((item) => (
         <button
-          key={item}
-          onClick={() => setActive(item)}
+          key={item.key}
+          onClick={() => setActive(item.key)}
           className={`block w-full text-left px-3 py-2 rounded mb-2
-            ${active === item ? "bg-gray-800" : "text-gray-300 hover:text-white"}`}
+            ${active === item.key ? "bg-gray-800" : "text-gray-300 hover:text-white"}`}
         >
-          {item.toUpperCase()}
+          {item.label}
         </button>
       ))}
     </aside>

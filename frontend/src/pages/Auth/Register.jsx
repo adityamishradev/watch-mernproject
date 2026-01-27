@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
 
 const Register = () => {
   const navigate = useNavigate();
   const { register: registerUser } = useAuth();
+  const { success, error } = useToast();
   const [loading, setLoading] = useState(false);
 
   const {
@@ -21,13 +23,13 @@ const Register = () => {
       const result = await registerUser(data.name, data.email, data.password);
       
       if (result.success) {
-        alert("Registration Successful ✅");
+        success("Registration Successful ✅");
         navigate("/login");
       } else {
-        alert(result.message);
+        error(result.message);
       }
     } catch (error) {
-      alert("Registration Failed");
+      error("Registration Failed");
     } finally {
       setLoading(false);
     }

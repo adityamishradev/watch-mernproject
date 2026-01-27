@@ -3,17 +3,37 @@ const Cart = require("../models/cart.model");
 
 async function addToCart(req, res) {
   try {
+    console.log("=== ADD TO CART ===");
+    console.log("Request body:", req.body);
+    console.log("User ID:", req.user.id);
+    
     const { productId, title, price, qty, imgSrc } = req.body;
     const userId = req.user.id;
 
     if (!productId || !price || !qty) {
+      console.log("Invalid data:", { productId, price, qty });
       return res.status(400).json({ message: "Invalid data" });
     }
 
+    // Backend validation: Ensure imgSrc is a string
+    let processedImgSrc = '';
+    if (typeof imgSrc === 'string') {
+      processedImgSrc = imgSrc;
+    } else if (imgSrc && typeof imgSrc === 'object' && imgSrc.url) {
+      processedImgSrc = imgSrc.url; // Extract URL from object
+    } else if (imgSrc && typeof imgSrc === 'object') {
+      // Handle other object formats
+      processedImgSrc = imgSrc.secure_url || imgSrc.public_id || '';
+    }
+    
+    console.log("Processed imgSrc:", processedImgSrc);
+
     let cart = await Cart.findOne({ userId });
+    console.log("Existing cart:", cart ? `Found with ${cart.items.length} items` : "Not found");
 
     if (!cart) {
       cart = new Cart({ userId, items: [] });
+      console.log("Created new cart");
     }
 
     const itemIndex = cart.items.findIndex(
@@ -22,20 +42,24 @@ async function addToCart(req, res) {
 
     if (itemIndex > -1) {
       cart.items[itemIndex].qty += qty;
+      console.log("Updated existing item quantity");
     } else {
       cart.items.push({
         productId,
         title,
         price,      // unit price
         qty,
-        imgSrc,
+        imgSrc: processedImgSrc, // Use processed string
       });
+      console.log("Added new item to cart");
     }
 
     await cart.save();
+    console.log("Cart saved successfully");
     res.status(200).json({ message: "Item added to cart", cart });
 
   } catch (error) {
+    console.error("Error in addToCart:", error);
     res.status(500).json({ message: error.message });
   }
 }

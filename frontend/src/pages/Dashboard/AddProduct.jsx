@@ -1,5 +1,6 @@
 import { useState } from "react";
 import API from "../../services/api";
+import { FaArrowLeft } from "react-icons/fa";
 
 const AddProduct = ({ setProducts, setActive, fetchProducts }) => {
   const [form, setForm] = useState({
@@ -20,22 +21,28 @@ const AddProduct = ({ setProducts, setActive, fetchProducts }) => {
       return;
     }
 
+    if (!form.image) {
+      alert('Please select an image');
+      return;
+    }
+
     try {
       setLoading(true);
       
-      // Convert image file to object URL for preview/storage
-      const imgSrc = form.image ? URL.createObjectURL(form.image) : "";
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('title', form.title);
+      formData.append('description', form.description);
+      formData.append('price', Number(form.price));
+      formData.append('category', form.category);
+      formData.append('qty', Number(form.qty));
+      formData.append('image', form.image); // File upload
 
-      const payload = {
-        title: form.title,
-        description: form.description,
-        price: Number(form.price),
-        category: form.category,
-        qty: Number(form.qty),
-        imgSrc: imgSrc,
-      };
-
-      const res = await API.post("/products/addproduct", payload);
+      const res = await API.post("/products/addproduct", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       
       if (res.data.success) {
         alert('Product added successfully!');
@@ -50,6 +57,10 @@ const AddProduct = ({ setProducts, setActive, fetchProducts }) => {
           image: null,
         });
         
+        // Reset file input
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) fileInput.value = '';
+        
         // Refresh products list
         fetchProducts();
         
@@ -57,6 +68,7 @@ const AddProduct = ({ setProducts, setActive, fetchProducts }) => {
         setActive("products");
       }
     } catch (err) {
+      console.error('Upload error:', err);
       alert(err.response?.data?.message || err.message || "Failed to add product");
     } finally {
       setLoading(false);
@@ -65,7 +77,15 @@ const AddProduct = ({ setProducts, setActive, fetchProducts }) => {
 
   return (
     <div className="bg-gray-800 p-6 rounded-xl shadow max-w-md">
-      <h2 className="text-xl font-bold mb-4 text-white">Add Product</h2>
+      <div className="flex items-center gap-3 mb-4">
+        <button
+          onClick={() => setActive('products')}
+          className="text-gray-400 hover:text-white"
+        >
+          <FaArrowLeft />
+        </button>
+        <h2 className="text-xl font-bold text-white">Add Product</h2>
+      </div>
 
       <form onSubmit={submitHandler}>
         <input
@@ -118,15 +138,33 @@ const AddProduct = ({ setProducts, setActive, fetchProducts }) => {
           accept="image/*"
           className="w-full mb-3 text-gray-300"
           onChange={(e) => setForm({ ...form, image: e.target.files[0] })}
+          required
         />
 
-        <button 
-          type="submit"
-          disabled={loading}
-          className="w-full bg-pink-500 text-white py-2 rounded hover:bg-pink-700 disabled:opacity-50"
-        >
-          {loading ? 'Adding...' : 'Add Product'}
-        </button>
+        {form.image && (
+          <div className="mb-3">
+            <p className="text-sm text-gray-300">Selected: {form.image.name}</p>
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <button 
+            type="submit"
+            disabled={loading}
+            className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 disabled:opacity-50"
+          >
+            {loading ? 'Adding...' : 'Add Product'}
+          </button>
+          
+          <button 
+            type="button"
+            onClick={() => setActive('products')}
+            disabled={loading}
+            className="px-4 bg-gray-600 text-white py-2 rounded hover:bg-gray-700 disabled:opacity-50"
+          >
+            Cancel
+          </button>
+        </div>
       </form>
     </div>
   );

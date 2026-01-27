@@ -1,20 +1,55 @@
 const mongoose = require("mongoose");
 
 const productSchema = new mongoose.Schema({
-  title: { type: String, require: true },
 
-  description: { type: String, require: true },
+  title: {
+    type: String,
+    required: true, // ❌ require → ✅ required (mongoose fix)
+    trim: true,
+  },
 
-  price: { type: Number, require: true },
+  description: {
+    type: String,
+    required: true,
+  },
 
-  category: { type: String, require: true },
+  price: {
+    type: Number,
+    required: true,
+  },
 
-  qty: { type: Number, require: true },
+  category: {
+    type: String,
+    required: true,
+  },
 
+  qty: {
+    type: Number,
+    required: true,
+  },
 
-  imgSrc: { type: String, require: true },
-  
-  createdAt: { type: Date, default: Date.now },
+  /* ================= IMAGE (CLOUDINARY) ================= */
+
+  // ❌ OLD
+  // imgSrc: { type: String, require: true }
+
+  // ✅ NEW (Cloudinary Object)
+  imgSrc: {
+    public_id: {
+      type: String,
+      required: true, // Cloudinary public id (delete/update ke liye)
+    },
+    url: {
+      type: String,
+      required: true, // Cloudinary image URL (frontend display)
+    },
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+
 });
 
 const Products = mongoose.model("Products", productSchema);

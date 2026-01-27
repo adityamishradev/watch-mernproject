@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../contexts/ToastContext";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { success, error } = useToast();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -22,7 +24,7 @@ const Login = () => {
       const result = await login(data.email, data.password, isAdmin);
       
       if (result.success) {
-        alert("Login Successful ✅");
+        success("Login Successful ✅");
         
         // Redirect based on user role
         if (result.user.role === "admin") {
@@ -31,10 +33,10 @@ const Login = () => {
           navigate("/");
         }
       } else {
-        alert(result.message);
+        error(result.message);
       }
     } catch (error) {
-      alert("Login Failed");
+      error("Login Failed");
     } finally {
       setLoading(false);
     }

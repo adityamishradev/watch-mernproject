@@ -8,12 +8,17 @@ A full-stack e-commerce application with React frontend and Node.js backend, fea
 - User authentication (login/register)
 - Admin authentication with separate login
 - Protected routes for admin dashboard
-- Product browsing and cart functionality
+- **Real-time product display** from backend API
+- **Search and filter functionality** for products
+- **Category-based product organization**
+- **Responsive product cards** with image support
+- Cart functionality with context management
 - Responsive design with Tailwind CSS
 
 ### Backend
 - RESTful API with Express.js
 - MongoDB database with Mongoose
+- Cloudinary for image storage
 - JWT authentication with cookies
 - Role-based access control (user/admin)
 - CRUD operations for products and users
@@ -22,7 +27,16 @@ A full-stack e-commerce application with React frontend and Node.js backend, fea
 - Real-time stats (users, products count)
 - User management (view, delete users)
 - Product management (add, view, delete products)
+- **Cloudinary image upload** for products
 - Secure admin-only access
+
+### Product Display
+- **Home page** with all products from database
+- **Collections page** with filtering and sorting
+- **Search functionality** by product name/description
+- **Category filtering** and organization
+- **Image support** for both old (URL) and new (Cloudinary) formats
+- **Responsive grid layout** for all screen sizes
 
 ## API Endpoints
 
@@ -73,6 +87,9 @@ A full-stack e-commerce application with React frontend and Node.js backend, fea
    MONGODB_URI=your_mongodb_connection_string
    ADMIN_EMAIL=admin@example.com
    ADMIN_PASSWORD=admin123
+   CLOUDINARY_NAME=your_cloudinary_cloud_name
+   CLOUDINARY_API_KEY=your_cloudinary_api_key
+   CLOUDINARY_API_SECRET=your_cloudinary_api_secret
    ```
 
 4. Start the backend server:
@@ -135,9 +152,11 @@ A full-stack e-commerce application with React frontend and Node.js backend, fea
 - Node.js
 - Express.js
 - MongoDB with Mongoose
+- Cloudinary for image storage
 - JWT for authentication
 - bcrypt for password hashing
 - CORS for cross-origin requests
+- Multer for file uploads
 
 ## Security Features
 - JWT tokens stored in HTTP-only cookies

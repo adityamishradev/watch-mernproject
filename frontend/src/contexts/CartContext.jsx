@@ -1,41 +1,39 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import API from "../services/api";
+import { useAuth } from "./AuthContext";
+import { getImageUrl } from "../utils/imageUtils";
 
 const CartContext = createContext();
-
-const LOCAL_KEY = "guest_cart";
-
-function saveLocal(items) {
-  try {
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
-  } catch (e) {}
-}
-
-function loadLocal() {
-  try {
-    const raw = localStorage.getItem(LOCAL_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
-  }
-}
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  // Try load from backend; if fails (not authenticated), fallback to localStorage
+  // Load cart only for authenticated users
   useEffect(() => {
     let mounted = true;
 
     async function init() {
+      // Only try to load cart if user is authenticated
+      if (!user || !user.isAuthenticated) {
+        if (mounted) {
+          setItems([]);
+          setLoading(false);
+        }
+        return;
+      }
+
       try {
+        console.log("Loading cart for authenticated user");
         const res = await API.get("/cart/getcart");
         if (!mounted) return;
+        console.log("Loaded cart from backend:", res.data.items);
         setItems(res.data.items || []);
       } catch (err) {
         if (!mounted) return;
-        setItems(loadLocal());
+        console.log("Failed to load cart:", err.response?.status);
+        setItems([]);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -43,91 +41,84 @@ export function CartProvider({ children }) {
 
     init();
     return () => (mounted = false);
-  }, []);
+  }, [user]); // Depend on user state
 
-  // helper to update state and local storage
-  const updateLocal = (nextItems) => {
+  // helper to update state (no localStorage for authenticated-only cart)
+  const updateState = (nextItems) => {
     setItems(nextItems);
-    saveLocal(nextItems);
   };
 
   const addItem = async (product, qty = 1) => {
     const productId = product._id || product.id;
-    // optimistic local update
-    const existing = items.find((i) => String(i.productId) === String(productId));
-    let next;
-    if (existing) {
-      next = items.map((i) =>
-        String(i.productId) === String(productId) ? { ...i, qty: i.qty + qty } : i
-      );
-    } else {
-      const newItem = {
-        productId,
-        title: product.title || product.name,
-        price: product.price || product.price,
-        qty,
-        imgSrc: product.imgSrc || product.image,
-      };
-      next = [...items, newItem];
-    }
-
-    updateLocal(next);
-
+    console.log("=== CART ADD ITEM ===");
+    console.log("Product ID:", productId);
+    console.log("Product:", product);
+    console.log("Quantity:", qty);
+    
+    // Fix: Extract string URL from imgSrc object using imageUtils
+    const imageUrl = getImageUrl(product.imgSrc || product.image);
+    console.log("Processed image URL:", imageUrl);
+    
     try {
-      await API.post("/cart/add", {
+      const response = await API.post("/cart/add", {
         productId,
         title: product.title || product.name,
         price: product.price || product.price,
         qty,
-        imgSrc: product.imgSrc || product.image,
+        imgSrc: imageUrl || '', // Send string URL instead of object
       });
-      // refresh from backend to keep canonical
+      
+      console.log("Cart add response:", response.data);
+      
+      // Refresh from backend after successful add
       const res = await API.get("/cart");
-      updateLocal(res.data.items || []);
+      updateState(res.data.items || []);
+      console.log("Cart refreshed successfully");
     } catch (err) {
-      // silent: keep local guest cart if backend failed
+      console.error("Failed to add to cart:", err);
+      throw err; // Re-throw to handle in component
     }
   };
 
   const increase = async (productId, item) => {
-    // reuse addItem for increment
-    await addItem({ _id: productId, title: item.title, price: item.price, imgSrc: item.imgSrc }, 1);
+    try {
+      await addItem({ _id: productId, title: item.title, price: item.price, imgSrc: item.imgSrc }, 1);
+    } catch (err) {
+      console.error("Failed to increase quantity:", err);
+      throw err;
+    }
   };
 
   const decrease = async (productId) => {
-    // optimistic update
-    const next = items
-      .map((i) => (String(i.productId) === String(productId) ? { ...i, qty: i.qty - 1 } : i))
-      .filter((i) => i.qty > 0);
-    updateLocal(next);
-
     try {
       await API.patch("/cart/decrease", { productId });
       const res = await API.get("/cart");
-      updateLocal(res.data.items || []);
+      updateState(res.data.items || []);
     } catch (err) {
-      // if backend fails, keep local state
+      console.error("Failed to decrease quantity:", err);
+      throw err;
     }
   };
 
   const remove = async (productId) => {
-    const next = items.filter((i) => String(i.productId) !== String(productId));
-    updateLocal(next);
-
     try {
       await API.delete(`/cart/remove/${productId}`);
       const res = await API.get("/cart");
-      updateLocal(res.data.items || []);
+      updateState(res.data.items || []);
     } catch (err) {
-      // ignore
+      console.error("Failed to remove item:", err);
+      throw err;
     }
   };
 
   const clear = async () => {
-    updateLocal([]);
     try {
       await API.delete("/cart/clear");
-    } catch (err) {}
+      updateState([]);
+    } catch (err) {
+      console.error("Failed to clear cart:", err);
+      throw err;
+    }
   };
 
   return (

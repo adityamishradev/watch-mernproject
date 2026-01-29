@@ -65,7 +65,7 @@ A full-stack e-commerce application with React frontend and Node.js backend, fea
 - `DELETE /api/cart/clear` - Clear cart
 
 ## Setup Instructions
-
+`
 ### Prerequisites
 - Node.js (v14 or higher)
 - MongoDB (local or cloud)

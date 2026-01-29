@@ -99,7 +99,7 @@ A full-stack e-commerce application with React frontend and Node.js backend, fea
    npm run dev
    ```
 
-   Backend will run on `http://localhost:3000`
+   Backend will run on `https://watch-mernproject.onrender.com`
 
 ### Frontend Setup
 1. Navigate to frontend directory:
@@ -117,17 +117,17 @@ A full-stack e-commerce application with React frontend and Node.js backend, fea
    npm run dev
    ```
 
-   Frontend will run on `http://localhost:5173`
+   Frontend will run on `https://watch-mern.vercel.app/`
 
 ## Usage
 
 ### User Access
-1. Visit `http://localhost:5173`
+1. Visit `https://watch-mern.vercel.app/`
 2. Register a new account or login
 3. Browse products and add to cart
 
 ### Admin Access
-1. Visit `http://localhost:5173/login`
+1. Visit `https://watch-mern.vercel.app//login`
 2. Toggle to "Admin" login
 3. Use admin credentials from `.env` file
 4. Access admin dashboard at `/admin`

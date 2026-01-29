@@ -2,7 +2,7 @@ const express = require('express')
 const app = express()
 const port = process.env.PORT || 3000;
 require('dotenv').config()
-const db = require('./config/db');
+const db = require('../.vscode/config/db');
 db();
 const authRoutes = require('./routes/Auth.routes');
 const adminRoutes = require('./routes/admin.routes');

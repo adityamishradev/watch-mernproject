@@ -2,7 +2,7 @@
 const productModel = require("../models/product.model.js");
 
 // 🔹 Cloudinary config import (NEW)
-const cloudinary = require("../../.vscode/config/cloudinary.js");
+const cloudinary = require("../config/cloudinary.js");
 
 /* ================= ADD PRODUCT ================= */
 async function Addproduct(req, res) {

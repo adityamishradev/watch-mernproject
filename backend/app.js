@@ -14,7 +14,7 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors')
 app.use(
   cors({
-    origin: ["https://watch-mern.vercel.app/", "http://localhost:5174"], // frontend URLs
+    origin: ["https://watch-taupe-delta.vercel.app/", "http://localhost:5174"], // frontend URLs
     credentials: true,               // cookies / jwt ke liye MUST
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],

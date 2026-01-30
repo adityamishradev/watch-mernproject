@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "https://watch-mernproject.onrender.com/api", // backend URL
+  baseURL: "https://watch-mernproject.onrender.com/api", // Local development backend
   withCredentials: true, // cookies / jwt ke liye
 });
 

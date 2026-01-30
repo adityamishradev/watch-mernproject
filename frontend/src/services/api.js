@@ -14,6 +14,12 @@ const API = axios.create({
 // Add request interceptor for debugging
 API.interceptors.request.use(
   (config) => {
+    // If a token is stored in localStorage (login saved it), attach it as Bearer
+    // This helps when cookies are not available (cross-origin or blocked).
+    const token = localStorage.getItem('token');
+    if (token && config && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     console.log(`🚀 Making ${config.method?.toUpperCase()} request to:`, config.baseURL + config.url);
     console.log('📦 Request data:', config.data);
     return config;

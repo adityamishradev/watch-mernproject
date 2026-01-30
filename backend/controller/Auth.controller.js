@@ -71,12 +71,23 @@ async function login(req, res) {
 
     const token = generateToken(user);
 
-    res.cookie("token", token, {
+    // Cookie options: use SameSite=None and secure in production so cross-site
+    // requests from different origins (frontend on Vercel / render) will send cookies.
+    const isProd = process.env.NODE_ENV === 'production' || process.env.DEPLOYMENT === 'production';
+    const cookieOptions = {
       httpOnly: true,
-      sameSite: "lax", // Changed from "strict" to "lax" for cross-origin
-      secure: false, // Set to false for localhost development
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    };
+
+    if (isProd) {
+      cookieOptions.sameSite = 'none';
+      cookieOptions.secure = true;
+    } else {
+      cookieOptions.sameSite = 'lax';
+      cookieOptions.secure = false;
+    }
+
+    res.cookie("token", token, cookieOptions);
 
     user.password = undefined;
 
@@ -119,8 +130,6 @@ async function adminLogin(req, res) {
 
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "lax", // Changed from "strict" to "lax" for cross-origin
-      secure: false, // Set to false for localhost development
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
